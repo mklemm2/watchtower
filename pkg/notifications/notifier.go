@@ -5,6 +5,7 @@ import (
 	"github.com/johntdyer/slackrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // Notifier can send log output as notification to admins, with optional batching.
@@ -32,13 +33,33 @@ func NewNotifier(c *cobra.Command) *Notifier {
 		log.WithField("could not read notifications argument", log.Fields{"Error": err}).Fatal()
 	}
 
-	n.types = n.GetNotificationTypes(c, acceptedLogLevels, types)
+	n.types = n.getNotificationTypes(c, acceptedLogLevels, types)
 
 	return n
 }
 
-// GetNotificationTypes produces an array of notifiers from a list of types
-func (n *Notifier) GetNotificationTypes(cmd *cobra.Command, levels []log.Level, types []string) []ty.Notifier {
+func (n *Notifier) String() string {
+	if len(n.types) < 1 {
+		return ""
+	}
+
+	sb := strings.Builder{}
+	for _, notif := range n.types {
+		for _, name := range notif.GetNames() {
+			sb.WriteString(name)
+			sb.WriteString(", ")
+		}
+	}
+	names := sb.String()
+
+	// remove the last separator
+	names = names[:len(names)-2]
+
+	return names
+}
+
+// getNotificationTypes produces an array of notifiers from a list of types
+func (n *Notifier) getNotificationTypes(cmd *cobra.Command, levels []log.Level, types []string) []ty.Notifier {
 	output := make([]ty.Notifier, 0)
 
 	for _, t := range types {
@@ -61,6 +82,8 @@ func (n *Notifier) GetNotificationTypes(cmd *cobra.Command, levels []log.Level, 
 			legacyNotifier = newGotifyNotifier(cmd, []log.Level{})
 		default:
 			log.Fatalf("Unknown notification type %q", t)
+			// Not really needed, used for nil checking static analysis
+			continue
 		}
 
 		notifier := newShoutrrrNotifierFromURL(
