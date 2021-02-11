@@ -46,6 +46,9 @@ func GetToken(container types.Container, registryAuth string) (string, error) {
 	}).Debug("Got response to challenge request")
 
 	challenge := strings.ToLower(v)
+	if challenge == "" {
+		return "", nil
+	}
 	if strings.HasPrefix(challenge, "basic") {
 		if registryAuth == "" {
 			return "", fmt.Errorf("no credentials available")

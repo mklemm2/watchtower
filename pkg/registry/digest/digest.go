@@ -76,12 +76,10 @@ func GetDigest(url string, token string) (string, error) {
 	req, _ := http.NewRequest("HEAD", url, nil)
 
 	if token != "" {
+		req.Header.Add("Authorization", token)
 		logrus.WithField("token", token).Trace("Setting request token")
-	} else {
-		return "", errors.New("could not fetch token")
 	}
 
-	req.Header.Add("Authorization", token)
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v1+json")
